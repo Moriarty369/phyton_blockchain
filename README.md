@@ -1,2 +1,2 @@
 # first-blockchain
-My first Blockchain in photon
+My first Blockchain in phyton
