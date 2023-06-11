@@ -3,23 +3,23 @@
 """
 Created on Mon May  8 18:40:01 2023
 
-@author: sibarita
+@author: Abelardo Acosta Cracco
 """
-
-#Módulo 1 - Crear Blockchain
 import datetime
 import hashlib
 import json
 from flask import Flask, jsonify
 
-class Blockchain:
+class Blockchain:  
     def __init__(self): 
         self.chain = []
         self.create_block(proof = 1, previous_hash = '0')
-        
+      
     def create_block(self, proof, previous_hash):
+        #se crea el bloque como diccionario para facilitar el jsonify
         block = {
             'index' : len(self.chain)+1,
+            # para que no haya conflicto de datos entre datetime y jsonify lo convertimos a string
             'timestamp' : str(datetime.datetime.now()),
             'proof' : proof,
             'previous_hash' : previous_hash
@@ -34,6 +34,9 @@ class Blockchain:
            new_proof = 1,
            check_proof = False
            while check_proof is False:
+              #la operacion entre new y previous proof no puede ser simétrica(o conmutativa). Esto ayuda a evitar que los mineros encuentren soluciones demasiado rápido mediante la simple adición o sustracción de valores pequeños(subimos la dificultad del nonce).
+              #Al restar new_proof - previous_proof, se crea una relación de dependencia entre el valor actual de prueba (new_proof) y el valor de prueba del bloque anterior (previous_proof). 
+              # OJO para lanzarlo podemos optimizar la operacion entre previous y new (añadir polinomio de mayor grado)
               hash_operation = hashlib.sha256(str(new_proof**2 - previous_proof**2).encode()).hexdigest()
               if hash_operation[:4] == '0000':
                   check_proof = True
@@ -41,9 +44,9 @@ class Blockchain:
                   new_proof +=1
            return new_proof
   
-    #Hash function
+   
     def hash(self, block):
-        #codificamos el diccionario a string con json organizando los elementos por su key (la función jsno es dump)
+        #codificamos el diccionario a string con json organizando los elementos por su key (la función json  es dump)
         encode_block = json.dumps(block, sort_keys = True ).encode()
         return hashlib.sha256(encode_block).hexdigest()
     
@@ -63,4 +66,26 @@ class Blockchain:
             previous_block = current_block
             block_index += 1
         return True    
-            # Mining blocks
+
+#Creamos una appweb con Flask
+app  = Flask(__name__)
+#instanciamos nuestra clase blockchain
+blockchain = Blockchain()
+
+#Minando un nuevo bloque configurando el Flask
+@app.route('/mine_block', methods = ['GET'])
+def mine_block():
+    previous_block = blockchain.get_previous_block()
+    previous_proof = previous_block['proof']
+    proof = blockchain.proof_of_work(previous_proof)
+    previous_hash = blockchain.hash(previous_block)
+    block = blockchain.create_block(proof, previous_hash)
+    response = {'message' : '¡Enhorabuena has minado un bloque!',
+                'index' : block['index'],
+                'timestamp' : block['timestamp'],
+                'proof' : block['proof'],
+                'previous_hash' : block['previous_hash']
+    }
+    #200 es el código http para indicar OK
+    return jsonify(response), 200      
+    
