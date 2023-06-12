@@ -31,7 +31,7 @@ class Blockchain:
         return self.chain[-1]
     
     def proof_of_work(self, previous_proof):
-           new_proof = 1,
+           new_proof = 1
            check_proof = False
            while check_proof is False:
               #la operacion entre new y previous proof no puede ser simétrica(o conmutativa). Esto ayuda a evitar que los mineros encuentren soluciones demasiado rápido mediante la simple adición o sustracción de valores pequeños(subimos la dificultad del nonce).
@@ -69,6 +69,10 @@ class Blockchain:
 
 #Creamos una appweb con Flask
 app  = Flask(__name__)
+# para evitar el Internal error 5000 ejecutamos la siguiente línea
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+
 #instanciamos nuestra clase blockchain
 blockchain = Blockchain()
 
@@ -84,8 +88,28 @@ def mine_block():
                 'index' : block['index'],
                 'timestamp' : block['timestamp'],
                 'proof' : block['proof'],
-                'previous_hash' : block['previous_hash']
-    }
+                'previous_hash' : block['previous_hash']}
     #200 es el código http para indicar OK
     return jsonify(response), 200      
-    
+
+#obtener la cadena de bloques completa 
+@app.route('/get_chain', methods = ['GET'])   
+def get_chain():
+    response = {'chain' : blockchain.chain,
+                'length' : len(blockchain.chain)}
+    return jsonify(response), 200
+#comprobamos si la cadena de bloques es valida 
+@app.route('/is_valid', methods=['GET'])
+def is_valid():
+    is_valid = blockchain.is_chain_valid(blockchain.chain)
+    if is_valid:
+        response = {'message': 'La cadena de bloques es válida.'}
+    else:
+        response = {'message': 'La cadena de bloques no es válida.'}
+    return jsonify(response), 200
+
+
+# Ejecutamos la app
+app.run(host = '0.0.0.0', port = 5000)
+
+
