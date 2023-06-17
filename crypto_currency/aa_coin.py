@@ -21,6 +21,9 @@ class Blockchain:
         #creamos la lista vacia para las transacciones
         self.transactions = []
         self.create_block(proof = 1, previous_hash = '0')
+        """la "lista" de nodos la creamos como un conjunto vacío ya que éstos se encuentran esparcidos y duplicados en la red
+            y no consideramos un orden pero evitando su duplicado el nodo se analizará individualmente para encontrar el mas largo ;)"""
+        self.nodes = set()
       
     def create_block(self, proof, previous_hash):
         #se crea el bloque como diccionario para facilitar el jsonify
@@ -75,7 +78,46 @@ class Blockchain:
             previous_block = current_block
             block_index += 1
         return True    
-
+    
+    #creamos nuestro método para añadir las transacciones
+    def add_transaction(self, sender, receiver, amount):
+        self.transactions.append({'sender': sender,
+                                  'receiver': receiver,
+                                  'amount': amount})
+        #obtenemos el indice del bloque aplicando la funcion get_previous_block al propio objeto  OJOOOOOOOO
+        previous_block = self.get_previous_block()
+        #retornamops el indice donde se retornara nuestra transaccion (el nuevo bloque)
+        return previous_block['index'] +1
+    
+    #filtramos la url de los nodos para posteriormente analizarlos y buscar el mas largo
+    def add_node(self, address):
+        parsed_url = urlparse(address)
+        self.nodes.add(parsed_url.netloc)
+    
+    #verificamos individualmente cual es el nodo con la cadena mas largo
+    def replace_chain(self):
+        network = self.nodes
+        longest_chain = None
+        #"MI" cadena es la mas larga hasta que detectemos otra más larga 
+        #en la red con el bucle for por medio de su url "filtrada"
+        max_length = len(self.chain)
+        for node in network:
+            response = requests.get(f'http://{node}/get_chain')
+            if response.status_code == 200:
+                length = response.json()['length']
+                chain = response.jsno()['chain']
+                #aqui comparamos la longitud de la cadena en los otros nodos (verificando si son válidas) 
+                #con la longitud de nuestra cadena
+                if length > max_length and self.is_chain_valid(chain):
+                    max_length = length
+                    longest_chain = chain
+        # si es diferente a None (su valor inicial), de lo contrario la cadena mas larga y el nodo elegido es el mío
+        if longest_chain:
+            self.chain = longest_chain
+            return True
+        #si nadie tiene una cadena mas larga retornamos False en la función para mantener nuestra cadena 
+        return False
+    
 #Creamos una appweb con Flask
 app  = Flask(__name__)
 # para evitar el Internal error 5000 ejecutamos la siguiente línea
