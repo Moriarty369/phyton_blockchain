@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Sat Jun 17 18:38:13 2023
 
@@ -94,7 +92,7 @@ class Blockchain:
         parsed_url = urlparse(address)
         self.nodes.add(parsed_url.netloc)
     
-    # Verificamos individualmente cual es el nodo con la cadena mas larga
+    # Verificamos individualmente cual es el nodo con la cadena mas largo
     def replace_chain(self):
         network = self.nodes
         longest_chain = None
@@ -130,7 +128,7 @@ node_address = str(uuid4()).replace('-','')
 # Instanciamos nuestra clase blockchain
 blockchain = Blockchain()
 
-# Minando un nuevo bloque configurando el Flask añadiendo las transacciones y permitirle ser una criptomenda
+# Minando un nuevo bloque configurando el Flask añadiendo las transacciones lo que le permite ser una criptomenda 
 @app.route('/mine_block', methods = ['GET'])
 def mine_block():
     previous_block = blockchain.get_previous_block()
@@ -138,7 +136,7 @@ def mine_block():
     proof = blockchain.proof_of_work(previous_proof)
     previous_hash = blockchain.hash(previous_block)
     # Añadimos la recompensa del minero
-    blockchain.add_transaction(sender = node_address, receiver = "minero", amount = 1)
+    blockchain.add_transaction(sender = node_address, receiver = "Abelardo Acosta", amount = 1)
     block = blockchain.create_block(proof, previous_hash)
     response = {'message' : '¡Enhorabuena has minado un bloque!',
                 'index' : block['index'],
@@ -208,8 +206,12 @@ def replace_chain():
                     'actual_chain' : blockchain.chain}
     return jsonify(response), 200 
 
-∫
+
+
+
+
 # Ejecutamos la app
-app.run(host = '0.0.0.0', port = 5000)
+app.run(host = '0.0.0.0', port = 5001)
+
 
 
