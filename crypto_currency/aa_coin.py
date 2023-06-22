@@ -63,7 +63,7 @@ class Blockchain:
         return hashlib.sha256(encode_block).hexdigest()
     
     # Validar si la cadena es "correcta" comprobando el previous_hash y verificando la proof
-    def is_chain_valid (self, chain,):
+    def is_chain_valid (self, chain):
         previous_block = chain[0]
         block_index = 1
         while block_index < len(chain):
@@ -102,15 +102,19 @@ class Blockchain:
         # En la red con el bucle for por medio de su url "filtrada"
         max_length = len(self.chain)
         for node in network:
-            response = requests.get(f'http://{node}/get_chain')
-            if response.status_code == 200:
-                length = response.json()['length']
-                chain = response.jsno()['chain']
+            try:
+                response = requests.get(f'http://{node}/get_chain')
+                if response.status_code == 200:
+                    data = response.json()
+                    length = data['length']
+                    chain = data['chain']
                 # Comparamos la longitud de la cadena en los otros nodos (verificando si son válidas) 
                 # Con la longitud de nuestra cadena
-                if length > max_length and self.is_chain_valid(chain):
-                    max_length = length
-                    longest_chain = chain
+                    if length > max_length and self.is_chain_valid(chain):
+                        max_length = length
+                        longest_chain = chain
+            except requests.exceptions.RequestException as e:
+                print(f"Error en la solicitud a {node}: {e}")
         # Si es diferente a None (su valor inicial), de lo contrario la cadena mas larga y el nodo elegido es el mío
         if longest_chain:
             self.chain = longest_chain
@@ -191,7 +195,7 @@ def connect_node():
         return 'No hay nodos para añadir', 400
     for node in nodes:
         blockchain.add_node(node)
-    response = {'mesage' : 'Tdos los nodos han sido conectados, la cadena de AAcoin contiene ahora los siguientes nodos: ', 
+    response = {'mesage' : 'Todos los nodos han sido conectados, la cadena de AAcoin contiene ahora los siguientes nodos: ', 
                 'total_nodes' : list(blockchain.nodes)}
     return jsonify(response), 201
 
@@ -208,8 +212,7 @@ def replace_chain():
                     'actual_chain' : blockchain.chain}
     return jsonify(response), 200 
 
-∫
 # Ejecutamos la app
-app.run(host = '0.0.0.0', port = 5000)
+app.run(host = '127.0.0.1', port = 5000)
 
 
